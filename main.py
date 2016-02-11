@@ -25,23 +25,24 @@ class grid:
         print("lol")
         print("kek")
         ## parse ##
+        self.f = open("output.txt", "w")
         self.currentTurn = 0
         self.gridSize = [int(lLignes.pop(0)),
                          int(lLignes.pop(0))]
         self.droneNumber = int(lLignes.pop(0))
-        self.droneList = [  {   "coord" : [1,1],
-                                "items":[0]*self.productNumber,
-                                "turnAvailable":0,
-                                "currentOrder":None
-                            }  
-                            for i in range(self.droneNumber)
-                         ]
-
         self.droneInMission = []
         self.maxTickNumber = int(lLignes.pop(0))
         self.droneMaxLoad = int(lLignes.pop(0))
         self.productNumber = int(lLignes.pop(0))
-
+        self.droneList = [  {   "coord" : [1,1],
+                                "itemList":[0]*self.productNumber,
+                                "turnAvailable":0,
+                                "currentOrder":None,
+                                "id" : i,
+                                "weight":0
+                            }  
+                            for i in range(self.droneNumber)
+                         ]
         self.productList = [int(j) for j in lLignes.pop(0).split(' ')]
 
         self.warehouseNumber = int(lLignes.pop(0))
@@ -69,13 +70,13 @@ class grid:
                                 for i in range(self.orderNumber)
                             ]
 
-    def findNextDrone(self)
+    def findNextDrone(self):
         m = LARGE_NUMBER
         nextAvail = None
         for d in self.droneList:
-            if(d["turnAvailable"] <= self.currentTurn)
+            if(d["turnAvailable"] <= self.currentTurn):
                 return (self.currentTurn, d)
-            if(d["turnAvailable"] <= m)
+            if(d["turnAvailable"] <= m):
                 m = d["turnAvailable"]
                 nextAvail = d
         return (nextAvail["turnAvailable"], nextAvail)
@@ -103,18 +104,56 @@ class grid:
         
     def isOrderReady(self, order):
         for i in range(self.productNumber):
-            if(order["warehouse"]["itemList"][i] < order["itemList"][i])
+            if(order["warehouse"]["itemList"][i] < order["itemList"][i]):
                 return False
         return True
 
+    def output(self, cmd):
+        self.f.write(cmd)
+
     def doOrder(self, order, drone):
-       drone["order"] = order
-        
+        drone["order"] = order
+    
+    def fillDrone(self, drone, warehouse, item):
+        order = drone["order"]
+        warehouse = order["warehouse"]
+        N = order["itemList"][item]
+        n = (self.maxDroneLoad - drone["weight"]) // N
+        order["itemList"][item] -= n
+        drone["itemList"][item] += n
+        drone["weight"] += n * self.productList[item]
+        return n
+ 
+    def doLoad(self, drone, item):
+        order = drone["order"]
+        warehouse = order["warehouse"]
+        n = fillDrone(drone, warehouse, item)
+        if n == 0:
+            return 0
+        self.output(str(drone["id"])+" L " + str(warehouse["id"]) + " " + str(item) + " " + n)
+        return n
+
+    def doStep(self, drone):
+        order = drone["order"]
+        warehouse = order["warehouse"]
+        if(drone["full"] == False):
+            hasLoaded = False
+            for item in order["itemList"]:
+                if(self.doLoad(drone, item)):
+                    hasLoaded = True
+            drone["full"] = True 
+
+        if(drone["full"] == True):
+            for item in order["itemList"]:
+                self.doDeliver(drone, order, item)
 
     def deliver(self):
         bestOrder = "kek"
         while bestOrder !=None:
-            drone = self.findNextDrone()
+            self.currentTurn, drone = self.findNextDrone()
+            if(drone["order"] != None):
+                self.doStep(drone)
+                continue
             bestDist = LARGE_NUMBER
             bestOrder = None
             for order in self.orderList:
