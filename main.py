@@ -5,10 +5,7 @@ from sys import argv
 from math import sqrt 
 
 DELIMITER = '/'
-<<<<<<< HEAD
-=======
 LARGE_NUMBER = 10**10
->>>>>>> 7e53cfe7056116a9650be49205a96b2d52dfc168
 
 if len(argv) < 2:
     ADD = "/home/eleve/hashcode16/test.txt"
